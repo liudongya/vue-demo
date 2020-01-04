@@ -6,16 +6,27 @@
         <img src="../assets/logo.png" alt />
       </div>
       <!-- 表单区域 -->
-      <el-form :model="loginForm" label-width="0px" class="login_form">
-        <el-form-item>
+      <el-form
+        ref="loginRef"
+        :model="loginForm"
+        :rules="loginRules"
+        label-width="0px"
+        class="login_form"
+      >
+        <el-form-item prop="username">
           <el-input prefix-icon="fa fa-user" v-model="loginForm.username" placeholder="请输入用户名"></el-input>
         </el-form-item>
-        <el-form-item>
-          <el-input prefix-icon="fa fa-lock" v-model="loginForm.password" show-password placeholder="请输入密码"></el-input>
+        <el-form-item prop="password">
+          <el-input
+            prefix-icon="fa fa-lock"
+            v-model="loginForm.password"
+            show-password
+            placeholder="请输入密码"
+          ></el-input>
         </el-form-item>
         <el-form-item class="btns">
-          <el-button type="primary">登录</el-button>
-          <el-button type="info">重置</el-button>
+          <el-button type="primary" @click="login('loginRef')">登录</el-button>
+          <el-button type="info" @click="resetForm('loginRef')">重置</el-button>
         </el-form-item>
       </el-form>
     </div>
@@ -24,12 +35,42 @@
 
 <script>
 export default {
-  data () {
+  data() {
     return {
       loginForm: {
-        username: '',
-        password: ''
+        username: 'admin',
+        password: '123456'
+      },
+      loginRules: {
+        username: [
+          { required: true, message: '请输入用戶名', trigger: 'blur' },
+          { min: 5, max: 10, message: '长度在 5 到 10 个字符', trigger: 'blur' }
+        ],
+        password: [
+          { required: true, message: '请输入密碼', trigger: 'blur' },
+          { min: 6, max: 15, message: '长度在 6 到 15 个字符', trigger: 'blur' }
+        ]
       }
+    }
+  },
+  methods: {
+    resetForm: function(refName) {
+      this.$refs[refName].resetFields()
+    },
+    login: function(refName) {
+      this.$refs[refName].validate(async valid => {
+        if (valid) {
+          const { data: res } = await this.$http.post('login', this.loginForm)
+          if (res.meta.status === 200) {
+            this.$message.success('登录成功')
+            // 保存token
+            window.sessionStorage.setItem('token', res.data.token)
+            this.$router.push('/home')
+          } else {
+            this.$message.error('登录失败')
+          }
+        }
+      })
     }
   }
 }
